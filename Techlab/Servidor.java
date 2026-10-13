@@ -17,5 +17,12 @@ public class Servidor extends AtivoTI{
     public String toString(){
         return "[Servidor] " +super.toString()+ " | IP: " +ipEstatico+ " | SO: " +sistemaOperacional;
     }
+    @Override
+    public String getCategoria() { return "Servidor"; }
+
+    @Override
+    public String getDetalheEspecifico() {
+    return ipEstatico + ";" + sistemaOperacional + ";" + memoriaRam;
+}
 
 }

@@ -130,7 +130,7 @@ package Techlab;
     } 
 }*/
 
-//Aula 6
+/*//Aula 6
 public class Main {
 
     public static void main(String[] args) {
@@ -223,5 +223,32 @@ public class Main {
         // Disparamos a mensagem garantida pelo contrato da interface 
         canalNotificacao.enviarAlerta("Superaquecimento detectado no processador do Servidor!");
         System.out.println("================================================--");
+    }
+}*/
+//Aula 08
+public class Main {
+    public static void main(String[] args) {
+        ConexaoBanco.inicializarBanco();
+        AtivoDAO dao = new AtivoDAO();
+
+        Servidor web = new Servidor(0, "PAT-2026-001", "Dell PowerEdge R740", "Ativo",
+                "192.168.1.100", "Ubuntu Server 22.04 LTS", 128);
+        Servidor banco = new Servidor(0, "PAT-2026-003", "HP ProLiant DL360", "Em Manutenção",
+                "192.168.1.150", "Windows Server 2022", 64);
+
+        try {
+            dao.salvar(web);
+            dao.salvar(banco);
+        } catch (java.sql.SQLException e) {
+            System.out.println("[AVISO] Registro não efetuado (possível patrimônio duplicado): " + e.getMessage());
+        }
+
+        try {
+            for (AtivoTI ativo : dao.listarTodos()) {
+                System.out.println(ativo);
+            }
+        } catch (java.sql.SQLException e) {
+            System.err.println("Erro ao gerar relatório: " + e.getMessage());
+        }
     }
 }
