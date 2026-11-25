@@ -1,0 +1,15 @@
+# Binários compilados
+bin/
+*.class
+
+# Banco local gerado na execução
+*.db
+
+# Arquivos gerados pelo sistema
+exportacao/
+fontes.txt
+
+# IDEs
+.vscode/
+.idea/
+*.iml

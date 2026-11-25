@@ -1,0 +1,4 @@
+*.bat text eol=crlf
+*.java text eol=lf
+Makefile text eol=lf
+*.jar binary

@@ -1,0 +1,7 @@
+categoria;patrimonio;modelo;status;data_aquisicao;detalhe_especifico
+Servidor;PAT-2026-001;Dell PowerEdge R740;ATIVO;2025-03-10;192.168.1.100|Ubuntu Server 22.04 LTS|128
+Servidor;PAT-2026-003;HP ProLiant DL360;ATIVO;2024-11-02;192.168.1.150|Windows Server 2022|64
+EstacaoTrabalho;PAT-2026-010;Lenovo ThinkCentre M70;ATIVO;2026-01-15;Financeiro|Maria Souza
+EstacaoTrabalho;PAT-2026-011;Dell OptiPlex 7010;EM_MANUTENCAO;2025-06-20;Suporte|João Lima
+DispositivoRede;PAT-2026-020;Cisco Catalyst 2960;ATIVO;2023-08-01;24
+DispositivoRede;PAT-2026-021;MikroTik RB4011;DESCARTADO;2021-05-12;10
