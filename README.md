@@ -154,11 +154,13 @@ Requisito: JDK 17 ou superior.
 executar.bat
 ```
 
-**Linux / macOS / Git Bash:**
+**Git Bash / Linux / macOS:**
 
 ```
-make run
+./executar.sh
 ```
+
+Ou, com `make` instalado: `make run`.
 
 **Manualmente:**
 

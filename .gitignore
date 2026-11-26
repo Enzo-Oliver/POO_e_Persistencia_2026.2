@@ -10,6 +10,5 @@ exportacao/
 fontes.txt
 
 # IDEs
-.vscode/
 .idea/
 *.iml

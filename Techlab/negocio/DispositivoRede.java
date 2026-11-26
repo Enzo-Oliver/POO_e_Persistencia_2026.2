@@ -18,10 +18,14 @@ public class DispositivoRede extends AtivoTI {
     public int getNumeroPortas() { return numeroPortas; }
 
     public void setNumeroPortas(int numeroPortas) {
+        this.numeroPortas = validarNumeroPortas(numeroPortas);
+    }
+
+    public static int validarNumeroPortas(int numeroPortas) {
         if (numeroPortas <= 0) {
             throw new IllegalArgumentException("Número de portas deve ser maior que zero.");
         }
-        this.numeroPortas = numeroPortas;
+        return numeroPortas;
     }
 
     @Override

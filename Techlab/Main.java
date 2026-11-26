@@ -23,15 +23,18 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class Main {
 
-    private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT);
     private static final Path ARQUIVO_EXPORTACAO = Path.of("exportacao", "ativos.csv");
 
     private static final Scanner leitor = new Scanner(System.in);
@@ -125,26 +128,28 @@ public class Main {
             return;
         }
 
-        String patrimonio = lerLinha("Código de patrimônio: ");
-        if (ativoDAO.existePatrimonio(patrimonio)) {
-            System.out.println("[AVISO] Já existe um ativo com o patrimônio " + patrimonio.toUpperCase() + ".");
-            return;
-        }
-        String modelo = lerLinha("Modelo: ");
+        String patrimonio = lerPatrimonioNovo();
+        String modelo = lerValidado("Modelo: ", v -> AtivoTI.validarTexto(v, "Modelo"));
         LocalDate data = lerData("Data de aquisição (dd/mm/aaaa, vazio = hoje): ");
 
         AtivoTI ativo;
         switch (tipo) {
             case "1":
-                ativo = new Servidor(patrimonio, modelo, data,
-                        lerLinha("IP estático: "), lerLinha("Sistema operacional: "), lerInt("Capacidade de RAM (GB): "));
+                String ip = lerValidado("IP estático: ", Servidor::validarIp);
+                String so = lerValidado("Sistema operacional: ", v -> AtivoTI.validarTexto(v, "Sistema operacional"));
+                int ram = lerValidado("Capacidade de RAM (GB): ",
+                        v -> Servidor.validarCapacidadeRAM(converterInt(v)));
+                ativo = new Servidor(patrimonio, modelo, data, ip, so, ram);
                 break;
             case "2":
-                ativo = new EstacaoTrabalho(patrimonio, modelo, data,
-                        lerLinha("Departamento: "), lerLinha("Usuário alocado: "));
+                String depto = lerValidado("Departamento: ", v -> AtivoTI.validarTexto(v, "Departamento"));
+                String usuario = lerValidado("Usuário alocado: ", v -> AtivoTI.validarTexto(v, "Usuário alocado"));
+                ativo = new EstacaoTrabalho(patrimonio, modelo, data, depto, usuario);
                 break;
             default:
-                ativo = new DispositivoRede(patrimonio, modelo, data, lerInt("Número de portas: "));
+                int portas = lerValidado("Número de portas: ",
+                        v -> DispositivoRede.validarNumeroPortas(converterInt(v)));
+                ativo = new DispositivoRede(patrimonio, modelo, data, portas);
         }
 
         ativoDAO.salvar(ativo);
@@ -174,31 +179,23 @@ public class Main {
         System.out.println("Atual: " + ativo);
         System.out.println("(deixe em branco para manter o valor atual)");
 
-        String modelo = lerLinhaOpcional("Modelo [" + ativo.getModelo() + "]: ");
-        if (!modelo.isEmpty()) ativo.setModelo(modelo);
+        atualizarCampo("Modelo [" + ativo.getModelo() + "]: ", ativo::setModelo);
 
         System.out.println("Status: 1 - Ativo | 2 - Em Manutenção | 3 - Descartado");
-        String status = lerLinhaOpcional("Novo status [" + ativo.getStatus() + "]: ");
-        if (!status.isEmpty()) ativo.setStatus(escolherStatus(status));
+        atualizarCampo("Novo status [" + ativo.getStatus() + "]: ", v -> ativo.setStatus(escolherStatus(v)));
 
         if (ativo instanceof Servidor) {
             Servidor s = (Servidor) ativo;
-            String ip = lerLinhaOpcional("IP [" + s.getIpEstatico() + "]: ");
-            if (!ip.isEmpty()) s.setIpEstatico(ip);
-            String so = lerLinhaOpcional("SO [" + s.getSistemaOperacional() + "]: ");
-            if (!so.isEmpty()) s.setSistemaOperacional(so);
-            String ram = lerLinhaOpcional("RAM em GB [" + s.getCapacidadeRAM() + "]: ");
-            if (!ram.isEmpty()) s.setCapacidadeRAM(converterInt(ram));
+            atualizarCampo("IP [" + s.getIpEstatico() + "]: ", s::setIpEstatico);
+            atualizarCampo("SO [" + s.getSistemaOperacional() + "]: ", s::setSistemaOperacional);
+            atualizarCampo("RAM em GB [" + s.getCapacidadeRAM() + "]: ", v -> s.setCapacidadeRAM(converterInt(v)));
         } else if (ativo instanceof EstacaoTrabalho) {
             EstacaoTrabalho e = (EstacaoTrabalho) ativo;
-            String depto = lerLinhaOpcional("Departamento [" + e.getDepartamento() + "]: ");
-            if (!depto.isEmpty()) e.setDepartamento(depto);
-            String usuario = lerLinhaOpcional("Usuário [" + e.getUsuarioAlocado() + "]: ");
-            if (!usuario.isEmpty()) e.setUsuarioAlocado(usuario);
+            atualizarCampo("Departamento [" + e.getDepartamento() + "]: ", e::setDepartamento);
+            atualizarCampo("Usuário [" + e.getUsuarioAlocado() + "]: ", e::setUsuarioAlocado);
         } else if (ativo instanceof DispositivoRede) {
             DispositivoRede d = (DispositivoRede) ativo;
-            String portas = lerLinhaOpcional("Portas [" + d.getNumeroPortas() + "]: ");
-            if (!portas.isEmpty()) d.setNumeroPortas(converterInt(portas));
+            atualizarCampo("Portas [" + d.getNumeroPortas() + "]: ", v -> d.setNumeroPortas(converterInt(v)));
         }
 
         ativoDAO.atualizar(ativo);
@@ -391,10 +388,47 @@ public class Main {
                 return LocalDate.now();
             }
             try {
-                return LocalDate.parse(texto, FORMATO_DATA);
+                return AtivoTI.validarDataAquisicao(LocalDate.parse(texto, FORMATO_DATA));
             } catch (DateTimeParseException e) {
-                System.out.println("Data inválida. Use o formato dd/mm/aaaa.");
+                System.out.println("[DADO INVÁLIDO] Data inválida. Use o formato dd/mm/aaaa. Tente novamente.");
+            } catch (IllegalArgumentException e) {
+                System.out.println("[DADO INVÁLIDO] " + e.getMessage() + " Tente novamente.");
             }
+        }
+    }
+
+    private static <T> T lerValidado(String mensagem, Function<String, T> validador) {
+        while (true) {
+            try {
+                return validador.apply(lerLinha(mensagem));
+            } catch (IllegalArgumentException e) {
+                System.out.println("[DADO INVÁLIDO] " + e.getMessage() + " Tente novamente.");
+            }
+        }
+    }
+
+    private static void atualizarCampo(String mensagem, Consumer<String> setter) {
+        while (true) {
+            String valor = lerLinhaOpcional(mensagem);
+            if (valor.isEmpty()) {
+                return;
+            }
+            try {
+                setter.accept(valor);
+                return;
+            } catch (IllegalArgumentException e) {
+                System.out.println("[DADO INVÁLIDO] " + e.getMessage() + " Tente novamente.");
+            }
+        }
+    }
+
+    private static String lerPatrimonioNovo() throws SQLException {
+        while (true) {
+            String patrimonio = lerValidado("Código de patrimônio: ", AtivoTI::validarPatrimonio);
+            if (!ativoDAO.existePatrimonio(patrimonio)) {
+                return patrimonio;
+            }
+            System.out.println("[AVISO] Já existe um ativo com o patrimônio " + patrimonio + ". Digite outro.");
         }
     }
 

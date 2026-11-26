@@ -26,16 +26,7 @@ public class Servidor extends AtivoTI {
     public int getCapacidadeRAM() { return capacidadeRAM; }
 
     public void setIpEstatico(String ipEstatico) {
-        String ip = validarTexto(ipEstatico, "IP estático");
-        if (!ip.matches("\\d{1,3}(\\.\\d{1,3}){3}")) {
-            throw new IllegalArgumentException("IP estático inválido: " + ip);
-        }
-        for (String parte : ip.split("\\.")) {
-            if (Integer.parseInt(parte) > 255) {
-                throw new IllegalArgumentException("IP estático inválido: " + ip);
-            }
-        }
-        this.ipEstatico = ip;
+        this.ipEstatico = validarIp(ipEstatico);
     }
 
     public void setSistemaOperacional(String sistemaOperacional) {
@@ -43,10 +34,28 @@ public class Servidor extends AtivoTI {
     }
 
     public void setCapacidadeRAM(int capacidadeRAM) {
+        this.capacidadeRAM = validarCapacidadeRAM(capacidadeRAM);
+    }
+
+    public static String validarIp(String ipEstatico) {
+        String ip = validarTexto(ipEstatico, "IP estático");
+        String erro = "IP estático inválido: " + ip + " (use o formato 192.168.1.100).";
+        if (!ip.matches("\\d{1,3}(\\.\\d{1,3}){3}")) {
+            throw new IllegalArgumentException(erro);
+        }
+        for (String parte : ip.split("\\.")) {
+            if (Integer.parseInt(parte) > 255) {
+                throw new IllegalArgumentException(erro);
+            }
+        }
+        return ip;
+    }
+
+    public static int validarCapacidadeRAM(int capacidadeRAM) {
         if (capacidadeRAM <= 0) {
             throw new IllegalArgumentException("Capacidade de RAM deve ser maior que zero.");
         }
-        this.capacidadeRAM = capacidadeRAM;
+        return capacidadeRAM;
     }
 
     @Override

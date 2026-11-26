@@ -40,7 +40,7 @@ public abstract class AtivoTI {
     public void setId(int id) { this.id = id; }
 
     public void setCodigoPatrimonio(String codigoPatrimonio) {
-        this.codigoPatrimonio = validarTexto(codigoPatrimonio, "Código de patrimônio").toUpperCase();
+        this.codigoPatrimonio = validarPatrimonio(codigoPatrimonio);
     }
 
     public void setModelo(String modelo) {
@@ -48,13 +48,7 @@ public abstract class AtivoTI {
     }
 
     public void setDataAquisicao(LocalDate dataAquisicao) {
-        if (dataAquisicao == null) {
-            throw new IllegalArgumentException("Data de aquisição é obrigatória.");
-        }
-        if (dataAquisicao.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Data de aquisição não pode estar no futuro.");
-        }
-        this.dataAquisicao = dataAquisicao;
+        this.dataAquisicao = validarDataAquisicao(dataAquisicao);
     }
 
     public void setStatus(StatusAtivo status) {
@@ -64,7 +58,21 @@ public abstract class AtivoTI {
         this.status = status;
     }
 
-    protected static String validarTexto(String valor, String campo) {
+    public static LocalDate validarDataAquisicao(LocalDate dataAquisicao) {
+        if (dataAquisicao == null) {
+            throw new IllegalArgumentException("Data de aquisição é obrigatória.");
+        }
+        if (dataAquisicao.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Data de aquisição não pode estar no futuro.");
+        }
+        return dataAquisicao;
+    }
+
+    public static String validarPatrimonio(String codigoPatrimonio) {
+        return validarTexto(codigoPatrimonio, "Código de patrimônio").toUpperCase();
+    }
+
+    public static String validarTexto(String valor, String campo) {
         if (valor == null || valor.isBlank()) {
             throw new IllegalArgumentException(campo + " não pode ser vazio.");
         }
